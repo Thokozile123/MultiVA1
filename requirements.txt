@@ -10,7 +10,7 @@ nltk
 gensim
 logging
 bs4
-urllib.request
+urllib
 multiprocessing
 texthero
 hyperas
