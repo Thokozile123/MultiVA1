@@ -1,4 +1,4 @@
-Streamlit
+streamlit
 numpy
 pandas
 scikit-learn
@@ -8,11 +8,9 @@ keras
 matplotlib
 nltk
 gensim
-logging
-bs4
-multiprocessing
+beautifulsoup4
 texthero
 hyperas
 tqdm
-imblearn
+imbalanced-learn
 hyperopt
