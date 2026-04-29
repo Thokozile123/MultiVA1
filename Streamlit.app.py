@@ -2,4 +2,4 @@
 import streamlit as st
 
 st.title('MultiVA')
-st.write('Good Morning Thokozile')
+st.info('This is a verbal autopsy text classification app')
