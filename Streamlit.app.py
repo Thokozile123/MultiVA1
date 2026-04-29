@@ -1,10 +1,9 @@
+# Importing necessary libraries
 
-import streamlit as st
-# Importing necessary libraries
-# Importing necessary libraries
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import streamlit as st
 from sklearn import metrics
 from patsy import dmatrices
 import statsmodels.api as sm
