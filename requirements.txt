@@ -11,7 +11,6 @@ setuptools<82
 tensorflow
 gensim
 beautifulsoup4
-hyperas
 tqdm
 imbalanced-learn
 hyperopt
