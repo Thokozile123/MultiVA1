@@ -8,6 +8,7 @@ keras
 matplotlib
 nltk
 setuptools<82
+tensorflow
 gensim
 beautifulsoup4
 hyperas
