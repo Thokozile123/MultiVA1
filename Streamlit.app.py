@@ -37,7 +37,7 @@ from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTETomek
 from imblearn.pipeline import make_pipeline
 
-from hyperas import optim
-from hyperas.distributions import choice, uniform
+#from hyperas import optim
+#from hyperas.distributions import choice, uniform
 from hyperopt import Trials, STATUS_OK, tpe
 from tqdm import tqdm
