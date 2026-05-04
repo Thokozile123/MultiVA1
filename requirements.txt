@@ -9,7 +9,6 @@ matplotlib
 nltk
 gensim
 beautifulsoup4
-texthero
 hyperas
 tqdm
 imbalanced-learn
