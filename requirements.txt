@@ -7,7 +7,7 @@ statsmodels
 keras
 matplotlib
 nltk
-setuptools<82
+setuptools<81
 tensorflow
 gensim
 beautifulsoup4
