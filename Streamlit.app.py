@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import nltk
 import gensim
 import bs4 as bs
-#import texthero as hero
+import texthero as hero
 
 from patsy import dmatrices
 import statsmodels.api as sm
