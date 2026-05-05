@@ -3,7 +3,6 @@ import re
 import logging
 import multiprocessing
 import urllib.request
-
 import numpy as np
 import pandas as pd
 import seaborn as sns
