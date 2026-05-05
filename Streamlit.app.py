@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import nltk
 import gensim
 import bs4 as bs
-#import texthero as hero
+import cleantext as clean
 
 from patsy import dmatrices
 import statsmodels.api as sm
