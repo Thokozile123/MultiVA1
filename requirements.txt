@@ -10,7 +10,7 @@ nltk
 setuptools<81
 tensorflow
 gensim
-#texthero==1.1.0
+cleantext
 beautifulsoup4
 tqdm
 imbalanced-learn
