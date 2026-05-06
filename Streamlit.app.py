@@ -65,10 +65,44 @@ else:
     ).fillna(0).astype(int)
 
     st.write(dataset)
-
+    # Dividing the dataset into binary and text features
     dataset1 = dataset[["disease_description", "finaldiagnosis"]]
     dataset2 = dataset[["female", "tuber", "diabetes", "men_con", "cough",
                         "ch_cough", "diarr", "exc_urine", "exc_drink"]]
 
     st.write(dataset1)
     st.write(dataset2)
+
+    # Replacing Null values will NAN and NAN with -1
+    dataset21 = dataset2.replace("#NULL!", np.nan)
+    dataset22 = dataset21.fillna(-1)
+    dataset22
+
+
+    text = dataset1["disease_description"].fillna("").astype(str)
+
+    dataset11 = text.str.lower()
+    dataset11 = dataset11.str.replace(r"[^a-z0-9\s]", " ", regex=True)
+    dataset11 = dataset11.str.replace(r"\s+", " ", regex=True).str.strip()
+
+    dataset12 = dataset11.str.replace(r"\d+", "", regex=True)
+
+    default_stopwords = set(stopwords.words("english"))
+    custom_stopwords = default_stopwords.union({
+    "sugar", "suger", "suggar", "sugr", "sugra", "shugar", "sujer",
+    "sogur", "suagr", "sruag", "sguar", "suar", "suga", "sgar",
+    "diabetes", "diabetis", "diabetees", "daiabetes", "diabtees",
+    "diabets", "dieabetes", "deabetes", "diabtes", "dyabetes",
+    "diabate", "diabetic", "diabete", "dabetes", "diabees"
+     })
+
+    def remove_stopwords_from_text(s):
+        tokens = s.split()
+        tokens = [t for t in tokens if t not in custom_stopwords]
+    return " ".join(tokens)
+
+    data3 = dataset12.apply(remove_stopwords_from_text)
+    data4 = data3
+
+    data6 = dataset1[["finaldiagnosis"]]
+    datatrain = pd.concat([data4.rename("disease_description"), data6], axis=1)
