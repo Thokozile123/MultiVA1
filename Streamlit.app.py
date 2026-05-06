@@ -69,3 +69,5 @@ else:
     dataset1 = dataset[["disease_description", "finaldiagnosis"]]
     dataset2 = dataset[["female", "tuber", "diabetes", "men_con", "cough",
                         "ch_cough", "diarr", "exc_urine", "exc_drink"]]
+
+    st.write(dataset)
