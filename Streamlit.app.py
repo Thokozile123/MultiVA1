@@ -65,7 +65,9 @@ with open(input_file, "r", newline="", encoding="utf-8") as csvfile, \
 dataset = pd.read_csv(output_file, header=None)
 dataset
 
-
+# Changing the target into integer
+dataset.finaldiagnosis = dataset.finaldiagnosis.astype(int)
+dataset
 
 
 
