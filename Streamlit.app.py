@@ -43,6 +43,7 @@ from tqdm import tqdm
 st.write("Hi Thokozile")
 
 # Importing the csv file
+# Importing the csv file
 input_file = "symptoms_all.csv"
 cols = [0, 8, 22, 25, 37, 45, 47, 64, 101, 116, 253, 280]
 
@@ -58,11 +59,13 @@ else:
         "ch_cough", "diarr", "exc_urine", "exc_drink",
         "disease_description", "finaldiagnosis"
     ]
-    # Changing the target into integer
-    dataset["finaldiagnosis"] = pd.to_numeric(dataset["finaldiagnosis"], errors="coerce").fillna(0).astype(int)
+
+    dataset["finaldiagnosis"] = pd.to_numeric(
+        dataset["finaldiagnosis"], errors="coerce"
+    ).fillna(0).astype(int)
+
     st.write(dataset)
 
-    # Split into text/target and binary feature sets
     dataset1 = dataset[["disease_description", "finaldiagnosis"]]
     dataset2 = dataset[["female", "tuber", "diabetes", "men_con", "cough",
-                    "ch_cough", "diarr", "exc_urine", "exc_drink"]]
+                        "ch_cough", "diarr", "exc_urine", "exc_drink"]]
