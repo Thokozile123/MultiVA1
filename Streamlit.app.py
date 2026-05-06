@@ -99,7 +99,7 @@ else:
     def remove_stopwords_from_text(s):
         tokens = s.split()
         tokens = [t for t in tokens if t not in custom_stopwords]
-    return " ".join(tokens)
+        return " ".join(tokens)
 
     data3 = dataset12.apply(remove_stopwords_from_text)
     data4 = data3
