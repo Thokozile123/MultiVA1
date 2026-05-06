@@ -46,7 +46,7 @@ st.write("Hi Thokozile")
 input_file = "symptoms_all.csv"
 cols = [0, 8, 22, 25, 37, 45, 47, 64, 101, 116, 253, 280]
 
-df = pd.read_csv(input_file, header=None)
+df = pd.read_csv(input_file, header=None, keep_default_na=False, dtype=str)
 
 if df.shape[1] <= max(cols):
     st.error(f"Need at least {max(cols)+1} columns, but file has {df.shape[1]}.")
