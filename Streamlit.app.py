@@ -43,36 +43,23 @@ from tqdm import tqdm
 st.write("Hi Thokozile")
 
 
-import csv
-import pandas as pd
 
 input_file = "symptoms_all.csv"
-output_file = "symptoms_all_variables.csv"
 cols = [0, 8, 22, 25, 37, 45, 47, 64, 101, 116, 253, 280]
 
-with open(input_file, "r", newline="", encoding="utf-8") as csvfile, \
-     open(output_file, "w", newline="", encoding="utf-8") as f:
-    reader = csv.reader(csvfile)
-    writer = csv.writer(f)
+df = pd.read_csv(input_file, header=None)
 
-    for row in reader:
-        if len(row) <= max(cols):
-            continue
-        need = [row[i] for i in cols]
-        need = ["0" if x == "" else "1" if x == "y" else x for x in need]
-        writer.writerow(need)
+if df.shape[1] <= max(cols):
+    st.error(f"Input file has only {df.shape[1]} columns, but column {max(cols)} is required.")
+else:
+    dataset = df.iloc[:, cols].copy()
 
-#Reading the file
-dataset = pd.read_csv(output_file, header=None)
-dataset
+    dataset = dataset.replace({"": "0", "y": "1"})
+    dataset.columns = [
+        "Id", "female", "tuber", "diabetes", "men_con", "cough",
+        "ch_cough", "diarr", "exc_urine", "exc_drink",
+        "disease_description", "finaldiagnosis"
+    ]
 
-print(dataset.columns)
-
-#Changing the target into integer
-#dataset["finaldiagnosis"] = dataset["finaldiagnosis"].astype(int)
-#dataset
-
-
-
-
-
+    st.write(dataset.head())
+    st.write(dataset.columns.tolist())
