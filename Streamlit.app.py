@@ -63,8 +63,6 @@ with open(input_file, 'r') as csvfile:
             if need[0] == 'y':
                need[0] = "1"
             #print(need)
-
-
 dataset = pd.read_csv(output_file)
 dataset
             thewriter = csv.writer(f)
