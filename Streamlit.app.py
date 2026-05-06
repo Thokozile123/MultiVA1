@@ -70,4 +70,5 @@ else:
     dataset2 = dataset[["female", "tuber", "diabetes", "men_con", "cough",
                         "ch_cough", "diarr", "exc_urine", "exc_drink"]]
 
-    st.write(dataset)
+    st.write(dataset1)
+    st.write(dataset2)
