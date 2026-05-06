@@ -53,5 +53,10 @@ if df.shape[1] <= max(cols):
 else:
     dataset = df.iloc[:, cols].copy()
     dataset = dataset.replace({"": "0", "y": "1"})
+    dataset.columns = [
+        "Id", "female", "tuber", "diabetes", "men_con", "cough",
+        "ch_cough", "diarr", "exc_urine", "exc_drink",
+        "disease_description", "finaldiagnosis"
+    ]
     st.write(dataset)
 
