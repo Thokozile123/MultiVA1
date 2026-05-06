@@ -58,6 +58,5 @@ else:
         "ch_cough", "diarr", "exc_urine", "exc_drink",
         "disease_description", "finaldiagnosis"
     ]
+    dataset["finaldiagnosis"] = pd.to_numeric(dataset["finaldiagnosis"], errors="coerce").fillna(0).astype(int)
     st.write(dataset)
-
-dataset["finaldiagnosis"] = pd.to_numeric(dataset["finaldiagnosis"], errors="coerce").fillna(0).astype(int)
