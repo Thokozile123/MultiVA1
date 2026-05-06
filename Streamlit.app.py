@@ -42,24 +42,29 @@ from hyperopt import Trials, STATUS_OK, tpe
 from tqdm import tqdm
 st.write("Hi Thokozile")
 
+# Importing the csv file
+import csv
+input_file= "symptoms_all.csv"
+output_file="symptoms_all_variables.csv"
+with open(input_file, 'r') as csvfile:
+    with open(output_file, 'w', newline='') as f:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        for row in spamreader:
+            need = [row[0], row[8],row[22],row[25],row[37],row[45],row[47],row[64],row[101], row[116], row[253], row[280]]
+            len_need = len(need)
+            for i in range(len_need):
+                if need[i] == '':
+                   need[i] = "0"
+                elif need[i] == 'y':
+                   need[i] = "1"
+                else:
+                   continue
+
+            if need[0] == 'y':
+               need[0] = "1"
+            #print(need)
 
 
-input_file = "symptoms_all.csv"
-cols = [0, 8, 22, 25, 37, 45, 47, 64, 101, 116, 253, 280]
 
-df = pd.read_csv(input_file, header=None)
-
-if df.shape[1] <= max(cols):
-    st.error(f"Input file has only {df.shape[1]} columns, but column {max(cols)} is required.")
-else:
-    dataset = df.iloc[:, cols].copy()
-
-    dataset = dataset.replace({"": "0", "y": "1"})
-    dataset.columns = [
-        "Id", "female", "tuber", "diabetes", "men_con", "cough",
-        "ch_cough", "diarr", "exc_urine", "exc_drink",
-        "disease_description", "finaldiagnosis"
-    ]
-
-    st.write(dataset.head())
-    st.write(dataset.columns.tolist())
+            thewriter = csv.writer(f)
+            thewriter.writerow(need)
