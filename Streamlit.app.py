@@ -70,7 +70,10 @@ with open(input_file, 'r') as csvfile:
             thewriter = csv.writer(f)
             thewriter.writerow(need)
             #f.write("%s %s %s %s %s %s %s %s %s %s %s\n" %(need[8],need[22],need[25],need[37],need[45],need[47],need[64],need[101], need[116], need[248], need[279]))
-    
+
+#Read the dataset
+dataset = pd.read_csv(output_file)
+dataset
 
 
 
