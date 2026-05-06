@@ -60,3 +60,4 @@ else:
     ]
     st.write(dataset)
 
+dataset["finaldiagnosis"] = pd.to_numeric(dataset["finaldiagnosis"], errors="coerce").fillna(0).astype(int)
