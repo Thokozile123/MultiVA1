@@ -41,3 +41,40 @@ from imblearn.pipeline import make_pipeline
 from hyperopt import Trials, STATUS_OK, tpe
 from tqdm import tqdm
 st.write("Hi Thokozile")
+
+
+# Importing the csv file
+import csv
+input_file= "symptoms_all.csv"
+output_file="symptoms_all_variables.csv"
+with open(input_file, 'r') as csvfile:
+    with open(output_file, 'w', newline='') as f:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        for row in spamreader:
+            need = [row[0], row[8],row[22],row[25],row[37],row[45],row[47],row[64],row[101], row[116], row[253], row[280]]
+            len_need = len(need)
+            for i in range(len_need):
+                if need[i] == '':
+                   need[i] = "0"
+                elif need[i] == 'y':
+                   need[i] = "1"
+                else:
+                   continue
+
+            if need[0] == 'y':
+               need[0] = "1"
+            #print(need)
+
+
+
+            thewriter = csv.writer(f)
+            thewriter.writerow(need)
+            #f.write("%s %s %s %s %s %s %s %s %s %s %s\n" %(need[8],need[22],need[25],need[37],need[45],need[47],need[64],need[101], need[116], need[248], need[279]))
+    
+
+
+
+
+
+
+
