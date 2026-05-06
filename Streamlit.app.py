@@ -62,11 +62,11 @@ with open(input_file, "r", newline="", encoding="utf-8") as csvfile, \
         need = ["0" if x == "" else "1" if x == "y" else x for x in need]
         writer.writerow(need)
 
+#Reading the file
 dataset = pd.read_csv(output_file, header=None)
-dataset
 
 # Changing the target into integer
-dataset.finaldiagnosis = dataset.finaldiagnosis.astype(int)
+dataset["finaldiagnosis"] = dataset["finaldiagnosis"].astype(int)
 dataset
 
 
