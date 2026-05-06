@@ -43,36 +43,26 @@ from tqdm import tqdm
 st.write("Hi Thokozile")
 
 
-# Importing the csv file
 import csv
-input_file= "symptoms_all.csv"
-output_file="symptoms_all_variables.csv"
-with open(input_file, 'r') as csvfile:
-    with open(output_file, 'w', newline='') as f:
-        spamreader = csv.reader(csvfile, delimiter=',')
-        for row in spamreader:
-            need = [row[0], row[8],row[22],row[25],row[37],row[45],row[47],row[64],row[101], row[116], row[253], row[280]]
-            len_need = len(need)
-            for i in range(len_need):
-                if need[i] == '':
-                   need[i] = "0"
-                elif need[i] == 'y':
-                   need[i] = "1"
-                else:
-                   continue
+import pandas as pd
 
-            if need[0] == 'y':
-               need[0] = "1"
-            #print(need)
+input_file = "symptoms_all.csv"
+output_file = "symptoms_all_variables.csv"
+cols = [0, 8, 22, 25, 37, 45, 47, 64, 101, 116, 253, 280]
 
+with open(input_file, "r", newline="", encoding="utf-8") as csvfile, \
+     open(output_file, "w", newline="", encoding="utf-8") as f:
+    reader = csv.reader(csvfile)
+    writer = csv.writer(f)
 
+    for row in reader:
+        if len(row) <= max(cols):
+            continue
+        need = [row[i] for i in cols]
+        need = ["0" if x == "" else "1" if x == "y" else x for x in need]
+        writer.writerow(need)
 
-            thewriter = csv.writer(f)
-            thewriter.writerow(need)
-            #f.write("%s %s %s %s %s %s %s %s %s %s %s\n" %(need[8],need[22],need[25],need[37],need[45],need[47],need[64],need[101], need[116], need[248], need[279]))
-
-#Read the dataset
-dataset = pd.read_csv(output_file)
+dataset = pd.read_csv(output_file, header=None)
 dataset
 
 
