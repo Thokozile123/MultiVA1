@@ -9,6 +9,7 @@ import seaborn as sns
 import streamlit as st
 import matplotlib.pyplot as plt
 import nltk
+nltk.download("stopwords")
 import gensim
 import bs4 as bs
 import cleantext as clean
