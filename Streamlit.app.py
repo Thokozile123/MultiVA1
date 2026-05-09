@@ -65,13 +65,16 @@ else:
         dataset["finaldiagnosis"], errors="coerce"
     ).fillna(0).astype(int)
 
+    st.header('Dataset')
     st.write(dataset)
     # Dividing the dataset into binary and text features
     dataset1 = dataset[["disease_description", "finaldiagnosis"]]
     dataset2 = dataset[["female", "tuber", "diabetes", "men_con", "cough",
                         "ch_cough", "diarr", "exc_urine", "exc_drink"]]
-
+    
+    st.header('Narrative Features')
     st.write(dataset1)
+    st.header('Binary Features')
     st.write(dataset2)
 
     # Replacing Null values will NAN and NAN with -1
@@ -107,3 +110,6 @@ else:
 
     data6 = dataset1[["finaldiagnosis"]]
     datatrain = pd.concat([data4.rename("disease_description"), data6], axis=1)
+
+    st.header('Narrative Features After Text Cleaning')
+    st.write(datatrain)
