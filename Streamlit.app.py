@@ -10,6 +10,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import nltk
 nltk.download("stopwords")
+nltk.download('punkt_tab')
 import gensim
 import bs4 as bs
 import cleantext as clean
