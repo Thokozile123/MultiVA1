@@ -153,8 +153,8 @@ else:
             self.vector_size = self.dbow.vector_size * 2
     
         def infer_vector(self, doc_words, alpha=0.025, steps=100):
-            dbow_vec = self.dbow.infer_vector(doc_words, alpha=alpha, steps=steps)
-            dmm_vec = self.dmm.infer_vector(doc_words, alpha=alpha, steps=steps)
+            dbow_vec = self.dbow.infer_vector(doc_words, alpha=alpha, epochs=steps)
+            dmm_vec = self.dmm.infer_vector(doc_words, alpha=alpha, epochs=steps)
             return np.hstack((dbow_vec, dmm_vec))
 
     #Use your custom class
