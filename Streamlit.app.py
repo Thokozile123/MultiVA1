@@ -145,6 +145,10 @@ else:
     st.write("DMM vocab size:", len(model_dmm.wv))
     st.write("DMM sample keys:", list(model_dmm.wv.index_to_key[:10]))
 
+    #Concatenating the two models
+    from gensim.test.test_doc2vec import ConcatenatedDoc2Vec
+    new_model = ConcatenatedDoc2Vec([model_dbow, model_dmm])
+
     #Buliding the final feature vector for the classifier
     def vec_for_learning(model, tagged_docs):
         sents = tagged_docs
