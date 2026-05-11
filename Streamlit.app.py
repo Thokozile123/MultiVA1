@@ -133,28 +133,19 @@ else:
     #DBOW
     #DBOW is the Doc2Vec model analogous to Skip-gram model in Word2Vec.
 
-    model_dbow = Doc2Vec(datatraintagged, dm=0, vector_size=50, negative=5, hs=0, min_count=2, sample = 0, workers=cores, epochs = 30)
-    #Save trained doc2vec model
-    model_dbow.save("test_doc2vec.model")
+    #DBOW model
+    model_dbow = Doc2Vec(datatraintagged, dm=0, vector_size=50, negative=5, hs=0, min_count=2, workers=cores, epochs=30)
+    model_dbow.save("dbow_model.model")
+    st.write("DBOW vocab size:", len(model_dbow.wv))  # Modern replacement
+    st.write("DBOW sample keys:", list(model_dbow.wv.index_to_key[:10]))
 
-    #Load saved doc2vec model
-    model_dbow = Doc2Vec.load("test_doc2vec.model")
+    #DMM model
+    model_dmm = Doc2Vec(datatraintagged, dm=1, dm_mean=1, vector_size=50, window=10, workers=5, epochs=30)
+    model_dmm.save("dmm_model.model")
+    st.write("DMM vocab size:", len(model_dmm.wv))
+    st.write("DMM sample keys:", list(model_dmm.wv.index_to_key[:10]))
 
-    ##Print model vocabulary
-    model_dbow.wv.vocab
-
-    model_dmm = Doc2Vec(datatraintagged, dm=1, dm_mean=1, vector_size=50, window=10, negative=5, min_count=1, workers=5, alpha=0.065, min_alpha=0.065, epochs = 30)
-
-    #Save trained doc2vec model
-    model_dmm.save("test_doc2vec.model")
-
-    ##Load saved doc2vec model
-    model_dmm= Doc2Vec.load("test_doc2vec.model")
-
-    ##Print model vocabulary
-    model_dmm.wv.vocab
-
-    #Deleting temporary training data to free up RAM.
+    #Clean up
     model_dbow.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
     model_dmm.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
 
