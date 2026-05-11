@@ -147,15 +147,15 @@ else:
     #Concatenating the two models
     class ConcatenatedDoc2Vec:
          """Combines DBOW + DMM vectors (100-dim for classifier input)."""
-          def __init__(self, dbow_model, dmm_model):
-              self.dbow = dbow_model
-              self.dmm = dmm_model
-              self.vector_size = self.dbow.vector_size * 2  # 50+50=100
+        def __init__(self, dbow_model, dmm_model):
+            self.dbow = dbow_model
+            self.dmm = dmm_model
+            self.vector_size = self.dbow.vector_size * 2  # 50+50=100
     
-          def infer_vector(self, doc_words, alpha=0.025, steps=100):
-              dbow_vec = self.dbow.infer_vector(doc_words, alpha=alpha, steps=steps)
-              dmm_vec = self.dmm.infer_vector(doc_words, alpha=alpha, steps=steps)
-              return np.hstack((dbow_vec, dmm_vec))
+        def infer_vector(self, doc_words, alpha=0.025, steps=100):
+            dbow_vec = self.dbow.infer_vector(doc_words, alpha=alpha, steps=steps)
+            dmm_vec = self.dmm.infer_vector(doc_words, alpha=alpha, steps=steps)
+            return np.hstack((dbow_vec, dmm_vec))
  
     #After the model_dbow, model_dmm training...
     combined_model = ConcatenatedDoc2Vec(model_dbow, model_dmm)
