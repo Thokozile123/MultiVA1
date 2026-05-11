@@ -168,7 +168,7 @@ else:
 
     #Specifying feature and target vector for binary, text and combined features
     #Text Features
-    y, x = vec_for_learning(new_model, datatraintagged)
+    y, x = vec_for_learning(combined_model, datatraintagged)
     x1 = pd.DataFrame(x)
 
     #Binary Features
