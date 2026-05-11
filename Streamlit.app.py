@@ -113,3 +113,132 @@ else:
 
     st.header('Narrative Features After Text Cleaning')
     st.write(datatrain)
+
+    #Tokenize text for NLP training
+    def tokenize_text(text):
+        tokens = []
+        for sent in nltk.sent_tokenize(text):
+            for word in nltk.word_tokenize(sent):
+                if len(word) < 2:
+                    continue
+                tokens.append(word.lower())
+        return tokens
+        
+    #Adding tags to our documents
+    datatraintagged = datatrain.apply(
+    lambda r: TaggedDocument(words=tokenize_text(r['disease_description']), tags=[r.finaldiagnosis]), axis=1)
+
+    cores = multiprocessing.cpu_count()
+    #DBOW
+    #DBOW is the Doc2Vec model analogous to Skip-gram model in Word2Vec.
+
+    model_dbow = Doc2Vec(datatraintagged, dm=0, vector_size=50, negative=5, hs=0, min_count=2, sample = 0, workers=cores, epochs = 30)
+    #Save trained doc2vec model
+    model_dbow.save("test_doc2vec.model")
+
+    #Load saved doc2vec model
+    model_dbow = Doc2Vec.load("test_doc2vec.model")
+
+    ##Print model vocabulary
+    model_dbow.wv.vocab
+
+    model_dmm = Doc2Vec(datatraintagged, dm=1, dm_mean=1, vector_size=50, window=10, negative=5, min_count=1, workers=5, alpha=0.065, min_alpha=0.065, epochs = 30)
+
+    #Save trained doc2vec model
+    model_dmm.save("test_doc2vec.model")
+
+    ##Load saved doc2vec model
+    model_dmm= Doc2Vec.load("test_doc2vec.model")
+
+    ##Print model vocabulary
+    model_dmm.wv.vocab
+
+    #Deleting temporary training data to free up RAM.
+    model_dbow.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
+    model_dmm.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
+
+    #Buliding the final feature vector for the classifier
+    def vec_for_learning(model, tagged_docs):
+        sents = tagged_docs
+        targets, regressors = zip(*[(doc.tags[0], model.infer_vector(doc.words, steps=20)) for doc in sents])
+        return targets, regressors
+
+    #Specifying feature and target vector for binary, text and combined features
+    #Text Features
+    y, x = vec_for_learning(new_model, datatraintagged)
+    x1 = pd.DataFrame(x)
+
+    #Binary Features
+    x2 = pd.DataFrame(dataset22)
+    y1 = pd.DataFrame(datatrain.finaldiagnosis)
+    
+    #Combined Features
+    dataset3 = pd.concat([x1, x2], axis = 1)
+
+    #Taking a look at the combined features
+    dataset4 = x1
+    st.write(dataset4)
+
+    #Splitting data into train and test sets
+    kf = StratifiedKFold(n_splits=5, random_state=42, shuffle=True)
+    x1_train, x1_test, y1_train, y1_test = train_test_split(dataset2, y1, random_state=42)
+    x2_train, x2_test, y2_train, y2_test = train_test_split(dataset3, y1, random_state=42)
+    x3_train, x3_test, y3_train, y3_test = train_test_split(dataset4, y1, random_state=42)
+
+    #Making SMOTE-ing part of our cross validation
+    #Manual upsampling within folds
+
+    #1.Random Forest
+    #Binary
+
+    kf = StratifiedKFold(n_splits=5, random_state=42, shuffle=True)
+    x1_train, x1_test, y1_train, y1_test = train_test_split(dataset2, y1, random_state=42)
+    rf1 = RandomForestClassifier(n_estimators=100, random_state=42)
+    example_params = {'n_estimators': 100, 'max_depth': 5, 'random_state': 13}
+    params = {'n_estimators': [50, 100, 200], 'max_depth': [4, 6, 10, 12], 'random_state': [13]}
+
+    def score_model(model, params, cv=None):
+        if cv is None:
+            cv = KFold(n_splits=5, random_state=42)
+
+        smoter = SMOTETomek(random_state=42)
+        scores1 = []
+        scores2 = []
+        scores3 = []
+        scores4 = []
+        scores5 = []
+        
+        for train_fold_index, val_fold_index in cv.split(x1_train, y1_train):
+            x_train_fold, x_val_fold = x1_train.iloc[train_fold_index], x1_train.iloc[val_fold_index]
+            y_train_fold, y_val_fold = y1_train.iloc[train_fold_index], y1_train.iloc[val_fold_index]
+
+            x_train_fold_upsample, y_train_fold_upsample = smoter.fit_resample(x_train_fold, y_train_fold)
+        
+            model_obj = model(**params).fit(x_train_fold_upsample, y_train_fold_upsample)
+            score1 = recall_score(y1_test, model_obj.predict(x1_test))
+            score2 = precision_score(y1_test, model_obj.predict(x1_test))
+            score3 = f1_score(y1_test, model_obj.predict(x1_test))
+            score4 = roc_auc_score(y1_test, model_obj.predict(x1_test))
+            score5 = accuracy_score(y1_test, model_obj.predict(x1_test))
+            
+            scores1.append(score1)
+            scores2.append(score2)
+            scores3.append(score3)
+            scores4.append(score4)
+            scores5.append(score5)
+        
+            dfrf1 = pd.DataFrame(scores1)
+            dfrf2 = pd.DataFrame(scores2)
+            dfrf3 = pd.DataFrame(scores3)
+            dfrf4 = pd.DataFrame(scores4)
+            dfrf5 = pd.DataFrame(scores5)
+        
+            dfrf11 = dfrf1.mean(axis=0)
+            dfrf12 = dfrf2.mean(axis=0)
+            dfrf13 = dfrf3.mean(axis=0)
+            dfrf14 = dfrf4.mean(axis=0)
+            dfrf15 = dfrf5.mean(axis=0)
+        return dfrf11, dfrf12, dfrf13, dfrf14, dfrf15
+    score_model(RandomForestClassifier, example_params, cv=kf)
+
+
