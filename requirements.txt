@@ -10,6 +10,7 @@ nltk
 setuptools<81
 tensorflow
 gensim
+testfixtures
 cleantext
 beautifulsoup4
 tqdm
