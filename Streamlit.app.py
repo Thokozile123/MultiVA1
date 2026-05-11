@@ -145,10 +145,6 @@ else:
     st.write("DMM vocab size:", len(model_dmm.wv))
     st.write("DMM sample keys:", list(model_dmm.wv.index_to_key[:10]))
 
-    #Clean up
-    model_dbow.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
-    model_dmm.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
-
     #Buliding the final feature vector for the classifier
     def vec_for_learning(model, tagged_docs):
         sents = tagged_docs
