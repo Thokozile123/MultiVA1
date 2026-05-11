@@ -44,8 +44,7 @@ from hyperopt import Trials, STATUS_OK, tpe
 from tqdm import tqdm
 st.write("Hi Thokozile")
 
-# Importing the csv file
-# Importing the csv file
+#Importing the csv file
 input_file = "symptoms_all.csv"
 cols = [0, 8, 22, 25, 37, 45, 47, 64, 101, 116, 253, 280]
 
