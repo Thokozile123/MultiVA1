@@ -22,8 +22,7 @@ from gensim.models.doc2vec import TaggedDocument
 
 from sklearn.model_selection import (
     train_test_split,
-    StratifiedKFold,
-    KFold
+    StratifiedKFold
 )
 
 from sklearn.metrics import (
@@ -46,8 +45,13 @@ nltk.download("stopwords")
 nltk.download("punkt")
 
 # ============================================================
-# STREAMLIT TITLE
+# STREAMLIT SETTINGS
 # ============================================================
+st.set_page_config(
+    page_title="MULTIVA Classification",
+    layout="wide"
+)
+
 st.title("MULTIVA Classification App")
 st.write("Hi Thokozile")
 
@@ -59,10 +63,13 @@ uploaded_file = st.file_uploader(
     type=["csv"]
 )
 
+# ============================================================
+# START PROCESSING
+# ============================================================
 if uploaded_file is not None:
 
     # ========================================================
-    # LOAD CSV
+    # LOAD DATA
     # ========================================================
     try:
 
@@ -80,7 +87,7 @@ if uploaded_file is not None:
 
     except Exception as e:
 
-        st.error(f"Error reading CSV: {e}")
+        st.error(f"Error reading CSV file: {e}")
         st.stop()
 
     # ========================================================
@@ -91,7 +98,7 @@ if uploaded_file is not None:
     if df.shape[1] <= max(cols):
 
         st.error(
-            f"Dataset requires at least "
+            f"Dataset must contain at least "
             f"{max(cols)+1} columns."
         )
 
@@ -118,7 +125,7 @@ if uploaded_file is not None:
     ]
 
     # ========================================================
-    # CLEAN RAW VALUES
+    # CLEAN VALUES
     # ========================================================
     dataset = dataset.replace({
         "": "0",
@@ -138,10 +145,11 @@ if uploaded_file is not None:
     # DISPLAY DATASET
     # ========================================================
     st.header("Dataset")
+
     st.write(dataset.head())
 
     # ========================================================
-    # SPLIT FEATURES
+    # SPLIT DATA
     # ========================================================
     dataset1 = dataset[
         ["disease_description", "finaldiagnosis"]
@@ -178,8 +186,15 @@ if uploaded_file is not None:
 
     dataset22 = dataset22.fillna(-1)
 
+    # IMPORTANT:
+    # convert column names to strings
+    dataset22.columns = dataset22.columns.astype(str)
+
     st.header("Binary Features")
+
     st.write(dataset22.head())
+
+    st.write(dataset22.dtypes)
 
     # ========================================================
     # TEXT CLEANING
@@ -258,6 +273,7 @@ if uploaded_file is not None:
     )
 
     st.header("Cleaned Narrative Features")
+
     st.write(datatrain.head())
 
     # ========================================================
@@ -281,22 +297,26 @@ if uploaded_file is not None:
         return tokens
 
     # ========================================================
-    # TAG DOCUMENTS
+    # TAGGED DOCUMENTS
     # ========================================================
     datatraintagged = datatrain.apply(
+
         lambda r: TaggedDocument(
+
             words=tokenize_text(
                 r["disease_description"]
             ),
+
             tags=[r.finaldiagnosis]
+
         ),
+
         axis=1
     )
 
     # ========================================================
     # DOC2VEC MODELS
     # ========================================================
-    @st.cache_resource
     def train_doc2vec_models(tagged_docs):
 
         model_dbow = Doc2Vec(
@@ -325,6 +345,8 @@ if uploaded_file is not None:
     model_dbow, model_dmm = train_doc2vec_models(
         datatraintagged
     )
+
+    st.success("Doc2Vec models trained successfully.")
 
     # ========================================================
     # CONCATENATED DOC2VEC
@@ -403,6 +425,10 @@ if uploaded_file is not None:
 
     x1 = pd.DataFrame(x_text)
 
+    # IMPORTANT:
+    # convert ALL text vector column names to strings
+    x1.columns = x1.columns.astype(str)
+
     # ========================================================
     # TARGET VARIABLE
     # ========================================================
@@ -423,8 +449,12 @@ if uploaded_file is not None:
 
     dataset3 = dataset3.fillna(0)
 
+    # IMPORTANT:
+    # convert ALL combined columns to strings
+    dataset3.columns = dataset3.columns.astype(str)
+
     # ========================================================
-    # GENERIC RANDOM FOREST FUNCTION
+    # RANDOM FOREST FUNCTION
     # ========================================================
     def run_random_forest(
         feature_data,
@@ -455,21 +485,14 @@ if uploaded_file is not None:
         )
 
         # ====================================================
-        # RANDOM FOREST PARAMETERS
+        # MODEL PARAMETERS
         # ====================================================
         params = {
+
             "n_estimators": 100,
             "max_depth": 5,
             "random_state": 13
         }
-
-        # ====================================================
-        # SMOTE
-        # ====================================================
-        smoter = SMOTETomek(
-            smote=SMOTE(k_neighbors=1),
-            random_state=42
-        )
 
         recalls = []
         precisions = []
@@ -502,9 +525,14 @@ if uploaded_file is not None:
             ]
 
             # ================================================
-            # SMOTE RESAMPLING
+            # SMOTE
             # ================================================
             try:
+
+                smoter = SMOTETomek(
+                    smote=SMOTE(k_neighbors=1),
+                    random_state=42
+                )
 
                 x_resampled, y_resampled = (
                     smoter.fit_resample(
@@ -516,13 +544,14 @@ if uploaded_file is not None:
             except Exception as e:
 
                 st.warning(
-                    f"SMOTE failed: {e}"
+                    f"SMOTE skipped on fold: {e}"
                 )
 
-                continue
+                x_resampled = x_train_fold
+                y_resampled = y_train_fold
 
             # ================================================
-            # MODEL TRAINING
+            # MODEL
             # ================================================
             rf_model = RandomForestClassifier(
                 **params
@@ -580,11 +609,11 @@ if uploaded_file is not None:
             recalls.append(recall)
             precisions.append(precision)
             f1s.append(f1)
-            aucs.append(auc)
             accuracies.append(accuracy)
+            aucs.append(auc)
 
         # ====================================================
-        # RESULTS
+        # RESULTS TABLE
         # ====================================================
         results_df = pd.DataFrame({
 
@@ -624,7 +653,7 @@ if uploaded_file is not None:
         )
 
         # ====================================================
-        # PREDICTIONS
+        # PREDICTIONS TABLE
         # ====================================================
         prediction_df = pd.DataFrame({
 
@@ -663,6 +692,9 @@ if uploaded_file is not None:
         "Random Forest - Combined Features"
     )
 
+    # ========================================================
+    # SUCCESS MESSAGE
+    # ========================================================
     st.success(
         "All Random Forest models completed successfully."
     )
