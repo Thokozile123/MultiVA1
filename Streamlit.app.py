@@ -180,8 +180,13 @@ else:
 
     #Taking a look at the combined features
     dataset4 = x1
-    st.write(dataset4)
+    #st.write(dataset4)
 
+    #Converting all data points to strings
+    dataset2.columns = dataset2.columns.astype(str) 
+    dataset3.columns = dataset3.columns.astype(str) 
+    dataset4.columns = dataset4.columns.astype(str) 
+    
     #Splitting data into train and test sets
     kf = StratifiedKFold(n_splits=5, random_state=42, shuffle=True)
     x1_train, x1_test, y1_train, y1_test = train_test_split(dataset2, y1, random_state=42)
