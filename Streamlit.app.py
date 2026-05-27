@@ -1,6 +1,4 @@
 # MULTIVA Streamlit App with Navigation Structure
-
-```python
 # ============================================================
 # MULTIVA STREAMLIT APPLICATION
 # WITH NAVIGATION MENU
