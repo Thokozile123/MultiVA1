@@ -1,252 +1,550 @@
-# Importing necessary libraries
-import re
-import logging
+# ================================
+# IMPORT LIBRARIES
+# ================================
 import multiprocessing
-import urllib.request
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import streamlit as st
-import matplotlib.pyplot as plt
 import nltk
-nltk.download("stopwords")
-nltk.download('punkt_tab')
-import gensim
-import bs4 as bs
-import cleantext as clean
-
-from patsy import dmatrices
-import statsmodels.api as sm
 
 from nltk.corpus import stopwords
-from nltk.stem import SnowballStemmer
-from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.tokenize import word_tokenize, sent_tokenize
 
-from gensim.models import KeyedVectors, Doc2Vec
+from gensim.models import Doc2Vec
 from gensim.models.doc2vec import TaggedDocument
 
-from sklearn import metrics, datasets, svm, utils
-from sklearn.linear_model import SGDClassifier, LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, StratifiedKFold
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, roc_curve, fbeta_score, make_scorer, recall_score, precision_score, f1_score
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import (
+    train_test_split,
+    StratifiedKFold,
+    KFold
+)
+
+from sklearn.metrics import (
+    accuracy_score,
+    roc_auc_score,
+    recall_score,
+    precision_score,
+    f1_score
+)
+
 from sklearn.ensemble import RandomForestClassifier
 
-from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTETomek
-from imblearn.pipeline import make_pipeline
+from imblearn.over_sampling import SMOTE
 
-#from hyperas import optim
-#from hyperas.distributions import choice, uniform
-from hyperopt import Trials, STATUS_OK, tpe
-from tqdm import tqdm
+# ================================
+# NLTK DOWNLOADS
+# ================================
+nltk.download("stopwords")
+nltk.download("punkt")
+
+# ================================
+# STREAMLIT TITLE
+# ================================
+st.title("MULTIVA Classification App")
 st.write("Hi Thokozile")
 
-#Importing the csv file
-input_file = "symptoms_all.csv"
-cols = [0, 8, 22, 25, 37, 45, 47, 64, 101, 116, 253, 280]
+# ================================
+# FILE UPLOAD
+# ================================
+uploaded_file = st.file_uploader(
+    "Upload symptoms_all.csv",
+    type=["csv"]
+)
 
-df = pd.read_csv(input_file, header=None, keep_default_na=False, dtype=str)
+if uploaded_file is not None:
 
-if df.shape[1] <= max(cols):
-    st.error(f"Need at least {max(cols)+1} columns, but file has {df.shape[1]}.")
-else:
+    # ================================
+    # LOAD DATA
+    # ================================
+    try:
+        df = pd.read_csv(
+            uploaded_file,
+            header=None,
+            keep_default_na=False,
+            dtype=str
+        )
+
+    except pd.errors.EmptyDataError:
+        st.error("The uploaded CSV file is empty.")
+        st.stop()
+
+    except Exception as e:
+        st.error(f"Error reading CSV file: {e}")
+        st.stop()
+
+    # ================================
+    # SELECT REQUIRED COLUMNS
+    # ================================
+    cols = [0, 8, 22, 25, 37, 45, 47, 64, 101, 116, 253, 280]
+
+    if df.shape[1] <= max(cols):
+        st.error(
+            f"Need at least {max(cols)+1} columns, "
+            f"but file has {df.shape[1]} columns."
+        )
+        st.stop()
+
     dataset = df.iloc[:, cols].copy()
-    dataset = dataset.replace({"": "0", "y": "1"})
+
+    # ================================
+    # CLEAN RAW VALUES
+    # ================================
+    dataset = dataset.replace({
+        "": "0",
+        "y": "1",
+        "Y": "1"
+    })
+
     dataset.columns = [
-        "Id", "female", "tuber", "diabetes", "men_con", "cough",
-        "ch_cough", "diarr", "exc_urine", "exc_drink",
-        "disease_description", "finaldiagnosis"
+        "Id",
+        "female",
+        "tuber",
+        "diabetes",
+        "men_con",
+        "cough",
+        "ch_cough",
+        "diarr",
+        "exc_urine",
+        "exc_drink",
+        "disease_description",
+        "finaldiagnosis"
     ]
 
+    # ================================
+    # TARGET VARIABLE
+    # ================================
     dataset["finaldiagnosis"] = pd.to_numeric(
-        dataset["finaldiagnosis"], errors="coerce"
+        dataset["finaldiagnosis"],
+        errors="coerce"
     ).fillna(0).astype(int)
 
-    st.header('Dataset')
-    st.write(dataset)
-    # Dividing the dataset into binary and text features
-    dataset1 = dataset[["disease_description", "finaldiagnosis"]]
-    dataset2 = dataset[["female", "tuber", "diabetes", "men_con", "cough",
-                        "ch_cough", "diarr", "exc_urine", "exc_drink"]]
-    
-    st.header('Narrative Features')
-    st.write(dataset1)
-    st.header('Binary Features')
-    st.write(dataset2)
+    st.header("Dataset")
+    st.write(dataset.head())
 
-    # Replacing Null values will NAN and NAN with -1
+    # ================================
+    # SPLIT FEATURES
+    # ================================
+    dataset1 = dataset[
+        ["disease_description", "finaldiagnosis"]
+    ]
+
+    dataset2 = dataset[
+        [
+            "female",
+            "tuber",
+            "diabetes",
+            "men_con",
+            "cough",
+            "ch_cough",
+            "diarr",
+            "exc_urine",
+            "exc_drink"
+        ]
+    ]
+
+    st.header("Narrative Features")
+    st.write(dataset1.head())
+
+    st.header("Binary Features")
+    st.write(dataset2.head())
+
+    # ================================
+    # CLEAN BINARY FEATURES
+    # ================================
     dataset21 = dataset2.replace("#NULL!", np.nan)
-    dataset22 = dataset21.fillna(-1)
-    dataset22
 
+    dataset22 = dataset21.fillna(-1)
+
+    # Convert ALL columns to numeric
+    dataset22 = dataset22.apply(
+        pd.to_numeric,
+        errors="coerce"
+    )
+
+    dataset22 = dataset22.fillna(-1)
+
+    st.header("Binary Features After Cleaning")
+    st.write(dataset22.head())
+
+    st.write("Data Types:")
+    st.write(dataset22.dtypes)
+
+    # ================================
+    # TEXT CLEANING
+    # ================================
     text = dataset1["disease_description"].fillna("").astype(str)
 
     dataset11 = text.str.lower()
-    dataset11 = dataset11.str.replace(r"[^a-z0-9\s]", " ", regex=True)
-    dataset11 = dataset11.str.replace(r"\s+", " ", regex=True).str.strip()
 
-    dataset12 = dataset11.str.replace(r"\d+", "", regex=True)
+    dataset11 = dataset11.str.replace(
+        r"[^a-z0-9\s]",
+        " ",
+        regex=True
+    )
 
+    dataset11 = dataset11.str.replace(
+        r"\s+",
+        " ",
+        regex=True
+    ).str.strip()
+
+    dataset12 = dataset11.str.replace(
+        r"\d+",
+        "",
+        regex=True
+    )
+
+    # ================================
+    # STOPWORDS
+    # ================================
     default_stopwords = set(stopwords.words("english"))
+
     custom_stopwords = default_stopwords.union({
-    "sugar", "suger", "suggar", "sugr", "sugra", "shugar", "sujer",
-    "sogur", "suagr", "sruag", "sguar", "suar", "suga", "sgar",
-    "diabetes", "diabetis", "diabetees", "daiabetes", "diabtees",
-    "diabets", "dieabetes", "deabetes", "diabtes", "dyabetes",
-    "diabate", "diabetic", "diabete", "dabetes", "diabees"
-     })
+        "sugar", "suger", "suggar", "sugr",
+        "sugra", "shugar", "sujer", "sogur",
+        "suagr", "sruag", "sguar", "suar",
+        "suga", "sgar", "diabetes",
+        "diabetis", "diabetees", "daiabetes",
+        "diabtees", "diabets", "dieabetes",
+        "deabetes", "diabtes", "dyabetes",
+        "diabate", "diabetic", "diabete",
+        "dabetes", "diabees"
+    })
 
     def remove_stopwords_from_text(s):
         tokens = s.split()
-        tokens = [t for t in tokens if t not in custom_stopwords]
+        tokens = [
+            t for t in tokens
+            if t not in custom_stopwords
+        ]
         return " ".join(tokens)
 
     data3 = dataset12.apply(remove_stopwords_from_text)
-    data4 = data3
 
-    data6 = dataset1[["finaldiagnosis"]]
-    datatrain = pd.concat([data4.rename("disease_description"), data6], axis=1)
+    # ================================
+    # FINAL TEXT DATAFRAME
+    # ================================
+    datatrain = pd.concat(
+        [
+            data3.rename("disease_description"),
+            dataset1["finaldiagnosis"]
+        ],
+        axis=1
+    )
 
-    st.header('Narrative Features After Text Cleaning')
-    st.write(datatrain)
+    st.header("Narrative Features After Cleaning")
+    st.write(datatrain.head())
 
-    #Tokenize text for NLP training
+    # ================================
+    # TOKENIZATION
+    # ================================
     def tokenize_text(text):
         tokens = []
-        for sent in nltk.sent_tokenize(text):
-            for word in nltk.word_tokenize(sent):
+
+        for sent in sent_tokenize(text):
+            for word in word_tokenize(sent):
+
                 if len(word) < 2:
                     continue
+
                 tokens.append(word.lower())
+
         return tokens
-        
-    #Adding tags to our documents
+
+    # ================================
+    # TAG DOCUMENTS
+    # ================================
     datatraintagged = datatrain.apply(
-    lambda r: TaggedDocument(words=tokenize_text(r['disease_description']), tags=[r.finaldiagnosis]), axis=1)
+        lambda r: TaggedDocument(
+            words=tokenize_text(r["disease_description"]),
+            tags=[r.finaldiagnosis]
+        ),
+        axis=1
+    )
 
-    cores = multiprocessing.cpu_count()
-    #DBOW
-    #DBOW is the Doc2Vec model analogous to Skip-gram model in Word2Vec.
+    # ================================
+    # DOC2VEC TRAINING
+    # ================================
+    cores = 1
 
-    #DBOW model
-    model_dbow = Doc2Vec(datatraintagged, dm=0, vector_size=50, negative=5, hs=0, min_count=2, workers=cores, epochs=30)
-    model_dbow.save("dbow_model.model")
-    st.write("DBOW vocab size:", len(model_dbow.wv))  # Modern replacement
-    st.write("DBOW sample keys:", list(model_dbow.wv.index_to_key[:10]))
+    @st.cache_resource
+    def train_doc2vec_models(tagged_docs):
 
-    #DMM model
-    model_dmm = Doc2Vec(datatraintagged, dm=1, dm_mean=1, vector_size=50, window=10, workers=5, epochs=30)
-    model_dmm.save("dmm_model.model")
-    st.write("DMM vocab size:", len(model_dmm.wv))
-    st.write("DMM sample keys:", list(model_dmm.wv.index_to_key[:10]))
+        # DBOW
+        model_dbow = Doc2Vec(
+            tagged_docs,
+            dm=0,
+            vector_size=50,
+            negative=5,
+            hs=0,
+            min_count=2,
+            workers=1,
+            epochs=30
+        )
 
+        # DMM
+        model_dmm = Doc2Vec(
+            tagged_docs,
+            dm=1,
+            dm_mean=1,
+            vector_size=50,
+            window=10,
+            workers=1,
+            epochs=30
+        )
 
-    #Concatenating the two models
+        return model_dbow, model_dmm
+
+    model_dbow, model_dmm = train_doc2vec_models(
+        datatraintagged
+    )
+
+    st.write(
+        "DBOW vocab size:",
+        len(model_dbow.wv)
+    )
+
+    st.write(
+        "DMM vocab size:",
+        len(model_dmm.wv)
+    )
+
+    # ================================
+    # CONCATENATED DOC2VEC
+    # ================================
     class ConcatenatedDoc2Vec:
-        """Combines DBOW + DMM vectors (100-dim for classifier input)."""
+
         def __init__(self, dbow_model, dmm_model):
             self.dbow = dbow_model
             self.dmm = dmm_model
-            self.vector_size = self.dbow.vector_size * 2
-    
-        def infer_vector(self, doc_words, alpha=0.025, steps=100):
-            dbow_vec = self.dbow.infer_vector(doc_words, alpha=alpha, epochs=steps)
-            dmm_vec = self.dmm.infer_vector(doc_words, alpha=alpha, epochs=steps)
-            return np.hstack((dbow_vec, dmm_vec))
+            self.vector_size = (
+                self.dbow.vector_size * 2
+            )
 
-    #Use your custom class
-    combined_model = ConcatenatedDoc2Vec(model_dbow, model_dmm)
+        def infer_vector(
+            self,
+            doc_words,
+            alpha=0.025,
+            steps=100
+        ):
 
-    #Buliding the final feature vector for the classifier
+            dbow_vec = self.dbow.infer_vector(
+                doc_words,
+                alpha=alpha,
+                epochs=steps
+            )
+
+            dmm_vec = self.dmm.infer_vector(
+                doc_words,
+                alpha=alpha,
+                epochs=steps
+            )
+
+            return np.hstack(
+                (dbow_vec, dmm_vec)
+            )
+
+    combined_model = ConcatenatedDoc2Vec(
+        model_dbow,
+        model_dmm
+    )
+
+    # ================================
+    # VECTOR CREATION
+    # ================================
     def vec_for_learning(model, tagged_docs):
-        sents = tagged_docs
-        targets, regressors = zip(*[(doc.tags[0], model.infer_vector(doc.words, steps=20)) for doc in sents])
+
+        targets = []
+        regressors = []
+
+        for doc in tagged_docs:
+
+            targets.append(doc.tags[0])
+
+            regressors.append(
+                model.infer_vector(
+                    doc.words,
+                    steps=20
+                )
+            )
+
         return targets, regressors
 
-    #Specifying feature and target vector for binary, text and combined features
-    #Text Features
-    y, x = vec_for_learning(combined_model, datatraintagged)
-    x1 = pd.DataFrame(x)
+    # ================================
+    # TEXT FEATURES
+    # ================================
+    y_text, x_text = vec_for_learning(
+        combined_model,
+        datatraintagged
+    )
 
-    #Binary Features
-    x2 = pd.DataFrame(dataset22)
-    y1 = pd.DataFrame(datatrain.finaldiagnosis)
-    
-    #Combined Features
-    dataset3 = pd.concat([x1, x2], axis = 1)
+    x1 = pd.DataFrame(x_text)
 
-    #Taking a look at the combined features
-    dataset4 = x1
-    #st.write(dataset4)
+    # ================================
+    # BINARY FEATURES
+    # ================================
+    x2 = dataset22
 
-    #Converting all data points to strings
-    dataset2.columns = dataset2.columns.astype(str) 
-    dataset3.columns = dataset3.columns.astype(str) 
-    dataset4.columns = dataset4.columns.astype(str) 
-    
-    #Splitting data into train and test sets
-    kf = StratifiedKFold(n_splits=5, random_state=42, shuffle=True)
-    x1_train, x1_test, y1_train, y1_test = train_test_split(dataset2, y1, random_state=42)
-    x2_train, x2_test, y2_train, y2_test = train_test_split(dataset3, y1, random_state=42)
-    x3_train, x3_test, y3_train, y3_test = train_test_split(dataset4, y1, random_state=42)
+    y1 = datatrain["finaldiagnosis"]
 
-    #Making SMOTE-ing part of our cross validation
-    #Manual upsampling within folds
+    # ================================
+    # COMBINED FEATURES
+    # ================================
+    dataset3 = pd.concat(
+        [x1, x2],
+        axis=1
+    )
 
-    #1.Random Forest
-    #Binary
+    # ================================
+    # TRAIN TEST SPLIT
+    # ================================
+    x_train, x_test, y_train, y_test = train_test_split(
+        x2,
+        y1,
+        test_size=0.2,
+        random_state=42,
+        stratify=y1
+    )
 
-    kf = StratifiedKFold(n_splits=5, random_state=42, shuffle=True)
-    x1_train, x1_test, y1_train, y1_test = train_test_split(dataset2, y1, random_state=42)
-    rf1 = RandomForestClassifier(n_estimators=100, random_state=42)
-    example_params = {'n_estimators': 100, 'max_depth': 5, 'random_state': 13}
-    params = {'n_estimators': [50, 100, 200], 'max_depth': [4, 6, 10, 12], 'random_state': [13]}
+    # ================================
+    # RANDOM FOREST
+    # ================================
+    rf_params = {
+        "n_estimators": 100,
+        "max_depth": 5,
+        "random_state": 13
+    }
 
-    def score_model(model, params, cv=None):
-        if cv is None:
-            cv = KFold(n_splits=5, random_state=42)
+    rf_model = RandomForestClassifier(
+        **rf_params
+    )
 
-        smoter = SMOTETomek(random_state=42)
-        scores1 = []
-        scores2 = []
-        scores3 = []
-        scores4 = []
-        scores5 = []
-        
-        for train_fold_index, val_fold_index in cv.split(x1_train, y1_train):
-            x_train_fold, x_val_fold = x1_train.iloc[train_fold_index], x1_train.iloc[val_fold_index]
-            y_train_fold, y_val_fold = y1_train.iloc[train_fold_index], y1_train.iloc[val_fold_index]
+    # ================================
+    # CROSS VALIDATION
+    # ================================
+    kf = StratifiedKFold(
+        n_splits=5,
+        random_state=42,
+        shuffle=True
+    )
 
-            x_train_fold_upsample, y_train_fold_upsample = smoter.fit_resample(x_train_fold, y_train_fold)
-        
-            model_obj = model(**params).fit(x_train_fold_upsample, y_train_fold_upsample)
-            score1 = recall_score(y1_test, model_obj.predict(x1_test))
-            score2 = precision_score(y1_test, model_obj.predict(x1_test))
-            score3 = f1_score(y1_test, model_obj.predict(x1_test))
-            score4 = roc_auc_score(y1_test, model_obj.predict(x1_test))
-            score5 = accuracy_score(y1_test, model_obj.predict(x1_test))
-            
-            scores1.append(score1)
-            scores2.append(score2)
-            scores3.append(score3)
-            scores4.append(score4)
-            scores5.append(score5)
-        
-            dfrf1 = pd.DataFrame(scores1)
-            dfrf2 = pd.DataFrame(scores2)
-            dfrf3 = pd.DataFrame(scores3)
-            dfrf4 = pd.DataFrame(scores4)
-            dfrf5 = pd.DataFrame(scores5)
-        
-            dfrf11 = dfrf1.mean(axis=0)
-            dfrf12 = dfrf2.mean(axis=0)
-            dfrf13 = dfrf3.mean(axis=0)
-            dfrf14 = dfrf4.mean(axis=0)
-            dfrf15 = dfrf5.mean(axis=0)
-        return dfrf11, dfrf12, dfrf13, dfrf14, dfrf15
-    score_model(RandomForestClassifier, example_params, cv=kf)
+    # ================================
+    # SMOTE + TRAINING
+    # ================================
+    smoter = SMOTETomek(
+        smote=SMOTE(k_neighbors=1),
+        random_state=42
+    )
 
+    recalls = []
+    precisions = []
+    f1s = []
+    aucs = []
+    accuracies = []
 
+    for train_index, val_index in kf.split(
+        x_train,
+        y_train
+    ):
+
+        x_train_fold = x_train.iloc[train_index]
+        x_val_fold = x_train.iloc[val_index]
+
+        y_train_fold = y_train.iloc[train_index]
+        y_val_fold = y_train.iloc[val_index]
+
+        # RESAMPLE
+        x_resampled, y_resampled = smoter.fit_resample(
+            x_train_fold,
+            y_train_fold
+        )
+
+        # TRAIN
+        rf_model.fit(
+            x_resampled,
+            y_resampled
+        )
+
+        # PREDICT
+        predictions = rf_model.predict(x_val_fold)
+
+        # METRICS
+        recall = recall_score(
+            y_val_fold,
+            predictions,
+            zero_division=0
+        )
+
+        precision = precision_score(
+            y_val_fold,
+            predictions,
+            zero_division=0
+        )
+
+        f1 = f1_score(
+            y_val_fold,
+            predictions,
+            zero_division=0
+        )
+
+        accuracy = accuracy_score(
+            y_val_fold,
+            predictions
+        )
+
+        try:
+            auc = roc_auc_score(
+                y_val_fold,
+                predictions
+            )
+        except:
+            auc = np.nan
+
+        recalls.append(recall)
+        precisions.append(precision)
+        f1s.append(f1)
+        accuracies.append(accuracy)
+        aucs.append(auc)
+
+    # ================================
+    # RESULTS
+    # ================================
+    st.header("Random Forest Results")
+
+    results = pd.DataFrame({
+        "Metric": [
+            "Recall",
+            "Precision",
+            "F1 Score",
+            "ROC AUC",
+            "Accuracy"
+        ],
+        "Score": [
+            np.mean(recalls),
+            np.mean(precisions),
+            np.mean(f1s),
+            np.nanmean(aucs),
+            np.mean(accuracies)
+        ]
+    })
+
+    st.write(results)
+
+    # ================================
+    # FINAL MODEL FIT
+    # ================================
+    rf_model.fit(x_train, y_train)
+
+    final_predictions = rf_model.predict(x_test)
+
+    st.header("Final Test Predictions")
+
+    prediction_df = pd.DataFrame({
+        "Actual": y_test.values,
+        "Predicted": final_predictions
+    })
+
+    st.write(prediction_df.head(20))
+
+    st.success("Model training completed successfully.")
