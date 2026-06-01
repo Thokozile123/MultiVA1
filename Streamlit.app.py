@@ -46,7 +46,7 @@ import matplotlib.pyplot as plt
 # ============================================================
 nltk.download("stopwords")
 nltk.download("punkt")
-
+nltk.download("punkt_tab")
 # ============================================================
 # STREAMLIT SETTINGS
 # ============================================================
