@@ -143,7 +143,7 @@ except Exception as e:
     st.stop()
 
 if uploaded_file:
-    st.headers('Data Statistics')
+    st.header('Data Statistics')
     df = pd.read_csv(uploaded_file)
     st.write(df.describe())
 
