@@ -35,10 +35,8 @@ from sklearn.metrics import (
 )
 
 from sklearn.ensemble import RandomForestClassifier
-
 from imblearn.combine import SMOTETomek
 from imblearn.over_sampling import SMOTE
-
 import matplotlib.pyplot as plt
 
 # ============================================================
@@ -144,6 +142,16 @@ except Exception as e:
     st.error(f"Error loading dataset: {e}")
     st.stop()
 
+if uploaded_file:
+    st.headers('Data Statistics')
+    df = pd.read_csv(uploaded_file)
+    st.write(df.describe())
+
+    st.header('Data Header')
+    st.write(df.head())
+
+    fig, ax = plt.subplot(1,1)
+    ax.scatter()
 # ============================================================
 # COLUMN SELECTION
 # ============================================================
