@@ -18,10 +18,7 @@ from nltk.tokenize import word_tokenize, sent_tokenize
 from gensim.models import Doc2Vec
 from gensim.models.doc2vec import TaggedDocument
 
-from sklearn.model_selection import (
-    train_test_split,
-    StratifiedKFold
-)
+from sklearn.model_selection import (train_test_split, StratifiedKFold)
 
 from sklearn.metrics import (
     accuracy_score,
@@ -31,8 +28,7 @@ from sklearn.metrics import (
     roc_auc_score,
     confusion_matrix,
     ConfusionMatrixDisplay,
-    roc_curve
-)
+    roc_curve)
 
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.combine import SMOTETomek
@@ -60,15 +56,14 @@ st.sidebar.title("MULTIVA Navigation")
 
 page = st.sidebar.radio(
     "Go To",
-    [
-        "Home",
-        "Dataset Overview",
-        "Text Preprocessing",
-        "Feature Engineering",
-        "Model Training",
-        "Model Evaluation",
-        "Predictions",
-        "Research Insights"
+    ["Home",
+    "Dataset Overview",
+    "Text Preprocessing",
+    "Feature Engineering",
+    "Model Training",
+    "Model Evaluation",
+    "Predictions",
+    "Research Insights"
     ]
 )
 
@@ -136,22 +131,11 @@ try:
         keep_default_na=False,
         dtype=str
     )
-
+    
 except Exception as e:
 
     st.error(f"Error loading dataset: {e}")
     st.stop()
-
-if uploaded_file:
-    st.header('Data Statistics')
-    df = pd.read_csv(uploaded_file)
-    st.write(df.describe())
-
-    st.header('Data Header')
-    st.write(df.head())
-
-    fig, ax = plt.subplot(1,1)
-    ax.scatter()
 # ============================================================
 # COLUMN SELECTION
 # ============================================================
@@ -184,7 +168,14 @@ dataset.columns = [
     "disease_description",
     "finaldiagnosis"
 ]
+st.header('Data Statistics')
+st.write(dataset.describe())
 
+st.header('Data Header')
+st.write(dataset.head())
+
+fig, ax = plt.subplot(1,1)
+ax.scatter()
 # ============================================================
 # CLEAN DATA
 # ============================================================
